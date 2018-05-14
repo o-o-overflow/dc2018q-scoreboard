@@ -1,14 +1,9 @@
 import React from 'react';
-import ReactModal from 'react-modal';
 import { Link, Route } from 'react-router-dom';
 import ChallengeMenu from './ChallengeMenu';
-import ChallengeModal from './ChallengeModal';
 import GameMatrix from './GameMatrix';
-import LogInModal from './LogInModal';
 import Rules from './Rules';
 import Scoreboard from './Scoreboard';
-
-ReactModal.setAppElement('#root');
 
 function challengePoints(solvers) {
   if (!Number.isInteger(solvers) || solvers < 2) return 500;
@@ -24,12 +19,8 @@ class App extends React.Component {
       pointsByTeam: {},
       teamScoreboardOrder: [],
       showChallengeId: '',
-      showChallengeModal: false,
-      showLogInModal: false,
       solvesByTeam: {},
       openedByCategory: {},
-      team: window.localStorage.getItem('team') || '',
-      token: window.localStorage.getItem('token') || '',
       unopened: {},
     };
     this.categoryByChallenge = {};
@@ -40,51 +31,13 @@ class App extends React.Component {
     this.loadData();
   }
 
-  setAuthentication = (data) => {
-    this.setState({ ...this.state, ...data });
-    window.localStorage.setItem('team', data.team);
-    window.localStorage.setItem('token', data.token);
-    this.handleCloseLogInModal();
-    this.loadData();
-  }
-
-  handleCloseChallengeModal = () => {
-    this.setState({ ...this.state, showChallengeModal: false });
-  }
-
-  handleCloseLogInModal = () => {
-    this.setState({ ...this.state, showLogInModal: false });
-  }
-
-
-  handleLogOut = () => {
-    this.setState({ ...this.state, showChallengeModal: false, team: '', token: '' });
-    window.localStorage.removeItem('team');
-    window.localStorage.removeItem('token');
-    this.loadData();
-  }
-
-  handleOpenChallengeModal = (event) => {
-    this.setState({ ...this.state, showChallengeId: event.id, showChallengeModal: true });
-  }
-
-  handleOpenLogInModal = () => {
-    this.setState({ ...this.state, showLogInModal: true, showChallengeModal: false });
-  }
-
   loadData = () => {
     fetch('data.json', { method: 'GET' })
       .then(response => response.json().then(body => ({ body, status: response.status })))
       .then(({ body, status }) => {
-        if (status !== 200) {
-          console.log(status);
-          console.log(body.message);
-          return;
+        if (status === 200) {
+          this.processData(body.message);
         }
-        this.processData(body.message);
-      })
-      .catch((error) => {
-        console.log(error);
       });
   }
 
@@ -100,10 +53,9 @@ class App extends React.Component {
       }
 
       if (team in solvesByTeam) {
-	  if (id !== "mom")
-	  {
-	    lastSolveTimeByTeam[team] = Math.max(lastSolveTimeByTeam[team], time);
-	  }
+        if (id !== 'mom') {
+          lastSolveTimeByTeam[team] = Math.max(lastSolveTimeByTeam[team], time);
+        }
         solvesByTeam[team].push(id);
       } else {
         lastSolveTimeByTeam[team] = time;
@@ -142,18 +94,18 @@ class App extends React.Component {
       pointsByTeam[team] = points;
     });
 
-	const teamScoreboardOrder = Object.keys(pointsByTeam).map(name => ({
-		lastSolveTime: lastSolveTimeByTeam[name],
-		name,
-		points: pointsByTeam[name],
-		solves: solvesByTeam[name],
-	}));
-	teamScoreboardOrder.sort((a, b) => {
-		if (a.points === b.points) {
-			return a.lastSolveTime - b.lastSolveTime;
-		}
-		return b.points - a.points;
-	});
+    const teamScoreboardOrder = Object.keys(pointsByTeam).map(name => ({
+      lastSolveTime: lastSolveTimeByTeam[name],
+      name,
+      points: pointsByTeam[name],
+      solves: solvesByTeam[name],
+    }));
+    teamScoreboardOrder.sort((a, b) => {
+      if (a.points === b.points) {
+        return a.lastSolveTime - b.lastSolveTime;
+      }
+      return b.points - a.points;
+    });
 
 
     this.setState({
@@ -161,24 +113,13 @@ class App extends React.Component {
       challenges,
       lastSolveTimeByTeam,
       pointsByTeam,
-	  teamScoreboardOrder,
+      teamScoreboardOrder,
       solvesByTeam,
       unopened: data.unopened_by_category,
     });
   }
 
   render() {
-    let tokenLink;
-    if (this.state.token !== '') {
-      tokenLink = (<button onClick={this.handleLogOut}>Log Out {this.state.team}</button>);
-    } else {
-      tokenLink = (<button onClick={this.handleOpenLogInModal}>Log In</button>);
-    }
-
-    const teamSolves = this.state.solvesByTeam[this.state.team] || [];
-    const solved = teamSolves.includes(this.state.showChallengeId);
-    const registerLink = this.state.team ? null : <a href="https://register.oooverflow.io">Register</a>;
-
     return (
       <div>
         <nav>
@@ -186,8 +127,6 @@ class App extends React.Component {
           <input type="checkbox" id="nav-toggle" />
           <label htmlFor="nav-toggle" className="label-toggle">☰</label>
           <div className="nav-items">
-            {tokenLink}
-			{registerLink}
             <Link to="/">À La Carte</Link>
             <Link to="/rules">Rules</Link>
             <Link to="/scoreboard">Scoreboard</Link>
@@ -199,41 +138,13 @@ class App extends React.Component {
           <div className="background">
             <div className="background-fade" />
             <div className="container">
-              <Route exact path="/" render={() => <ChallengeMenu authenticated={this.state.token !== ''} challenges={this.state.challenges} onClick={this.handleOpenChallengeModal} onUnload={this.handleCloseChallengeModal} unopened={this.state.unopened} />} />
+              <Route exact path="/" render={() => <ChallengeMenu challenges={this.state.challenges} unopened={this.state.unopened} />} />
               <Route exact path="/rules" component={Rules} />
-              <Route exact path="/scoreboard" render={() => <Scoreboard categoryByChallenge={this.categoryByChallenge} lastSolveTimeByTeam={this.state.lastSolveTimeByTeam} pointsByTeam={this.state.pointsByTeam} solvesByTeam={this.state.solvesByTeam} teamScoreboardOrder={this.state.teamScoreboardOrder} team={this.state.team} />} />
-				<Route exact path="/solves" render={() => <GameMatrix challenges={this.state.challenges} teamScoreboardOrder={this.state.teamScoreboardOrder}/>}/>
+              <Route exact path="/scoreboard" render={() => <Scoreboard categoryByChallenge={this.categoryByChallenge} pointsByTeam={this.state.pointsByTeam} teamScoreboardOrder={this.state.teamScoreboardOrder} />} />
+              <Route exact path="/solves" render={() => <GameMatrix challenges={this.state.challenges} teamScoreboardOrder={this.state.teamScoreboardOrder} />} />
             </div>
           </div>
         </div>
-        <ReactModal
-          className="modal"
-          contentLabel="Log In Modal"
-          isOpen={this.state.showLogInModal}
-          onRequestClose={this.handleCloseLogInModal}
-        >
-          <LogInModal
-            onClose={this.handleCloseLogInModal}
-            setAuthentication={this.setAuthentication}
-          />
-        </ReactModal>
-        <ReactModal
-          className="modal"
-          contentLabel="Challenge Modal"
-          isOpen={this.state.showChallengeModal}
-          onRequestClose={this.handleCloseChallengeModal}
-        >
-          <ChallengeModal
-            challengeId={this.state.showChallengeId}
-            challengeTitle={this.challengeTitlesById[this.state.showChallengeId] || ''}
-            onClose={this.handleCloseChallengeModal}
-            onTokenExpired={this.handleLogOut}
-            onSolve={this.loadData}
-            solved={solved}
-            token={this.state.token}
-          />
-        </ReactModal>
-
       </div>
     );
   }

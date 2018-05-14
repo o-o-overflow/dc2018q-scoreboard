@@ -20,17 +20,9 @@ function Challenge(props) {
     status = '(Be the first one to order it)';
   }
 
-  let onClick = null;
-  let menuClasses = 'menu-item';
-  if (props.authenticated) {
-    onClick = () => props.onClick(props);
-    menuClasses += ' logged-in';
-  }
-
   return (
     <div
-      className={menuClasses}
-      onClick={onClick}
+      className="menu-item"
       onKeyPress={() => {}}
       role="presentation"
     >
@@ -46,8 +38,6 @@ function Challenge(props) {
   );
 }
 Challenge.propTypes = {
-  authenticated: PropTypes.bool.isRequired,
-  onClick: PropTypes.func.isRequired,
   points: PropTypes.number.isRequired,
   solveCount: PropTypes.number.isRequired,
   solved: PropTypes.bool.isRequired,

@@ -12,10 +12,8 @@ function ChallengeSection(props) {
     return (
       <Challenge
         {...challenge}
-        authenticated={props.authenticated}
         index={index}
         key={challenge.id}
-        onClick={props.onClick}
         section={props.title}
       />
     );
@@ -29,9 +27,7 @@ function ChallengeSection(props) {
   );
 }
 ChallengeSection.propTypes = {
-  authenticated: PropTypes.bool.isRequired,
   challenges: PropTypes.arrayOf(PropTypes.object).isRequired,
-  onClick: PropTypes.func.isRequired,
   style: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
 };
