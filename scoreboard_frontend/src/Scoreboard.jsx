@@ -2,74 +2,57 @@ import PropTypes from 'prop-types';
 import React from 'react';
 
 const CATEGORY_TO_CSS_CLASS = {
-  'amuse bouche': 'amuse',
-  appetizers: 'appetizers',
-  'from the grill': 'grill',
-  'signature dishes': 'signature',
-  'guest chefs': 'guest',
-  'fruits and desserts': 'desserts',
+  'amuse bouche': 'category-amuse',
+  appetizers: 'category-appetizers',
+  'from the grill': 'category-grill',
+  'signature dishes': 'category-signature',
+  'guest chefs': 'category-guest',
+  'fruits and desserts': 'category-desserts',
 };
 
 function categoryIcons(categoryByChallenge, challengeId) {
   const cssClass = CATEGORY_TO_CSS_CLASS[categoryByChallenge[challengeId]];
-  return `<span title="${challengeId}" class="category-${cssClass}"></span>`;
+  return <span className={cssClass} key={challengeId} title={challengeId} />;
 }
 
 function Scoreboard(props) {
-  var num = 1;
-  const teams = props.teamScoreboardOrder.map(team => ({
+  let rank = 0;
+  const teams = props.teamScoreboardOrder.map((team) => {
+    rank += 1;
+    return {
       lastSolveTime: team.lastSolveTime,
       name: team.name,
-	  num: num++,
+      rank,
       points: props.pointsByTeam[team.name],
       solves: team.solves.map(id => categoryIcons(props.categoryByChallenge, id)),
-  }));
-  // no longer needed because I lifted this code up into App
-  // teams.sort((a, b) => {
-  //   if (a.points === b.points) {
-  //     return a.lastSolveTime - b.lastSolveTime;
-  //   }
-  //   return b.points - a.points;
-  // });
-
+    };
+  });
 
   const teamRows = teams.map(team =>
     (
-		<tr key={team.name} id={team.name} >
-        <td>{team.num}</td>
+      <tr key={team.name} id={team.name} >
+        <td>{team.rank}</td>
         <td>{team.name}</td>
-        <td dangerouslySetInnerHTML={{ __html: team.solves.join('') }} />
+        <td>{team.solves}</td>
         <td>{team.points}</td>
       </tr>
     ));
 
-	function handleClick() {
-		const element = document.getElementById(props.team);
-		if (element) {
-			element.scrollIntoView();
-		}
-	}
-
-	const youLink = props.team ? <a className="toTeam" onClick={handleClick}>YOU</a> : null;
-
-	return (
-		<div>
-		  <div>{youLink}</div>
-		  <table className="scoreboard">
-			<thead>
-			  <tr><th>#</th><th>Team</th><th>Ordered</th><th>Points</th></tr>
-			</thead>
-			<tbody>
-			  {teamRows}
-			</tbody>
-		  </table>
-		</div>
+  return (
+    <div>
+      <table className="scoreboard">
+        <thead>
+          <tr><th>#</th><th>Team</th><th>Ordered</th><th>Points</th></tr>
+        </thead>
+        <tbody>
+          {teamRows}
+        </tbody>
+      </table>
+    </div>
   );
 }
 Scoreboard.propTypes = {
-  categoryByChallenge: PropTypes.objectOf(PropTypes.string).isRequired,
-  lastSolveTimeByTeam: PropTypes.objectOf(PropTypes.number).isRequired,
   pointsByTeam: PropTypes.objectOf(PropTypes.number).isRequired,
-  solvesByTeam: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.string)).isRequired,
+  teamScoreboardOrder: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 export default Scoreboard;

@@ -106,7 +106,7 @@ class Registration extends React.Component {
             ctfTimeTeamId: '', email: '', password: '', passwordConfirmation: '', teamName: '',
           };
         } else {
-          message = body.message;
+          ({ message } = body);
         }
         this.setState({
           ...this.state,
